@@ -179,7 +179,8 @@ def summarize_transcript(
     prompt = f"""
 You are an AI news editor.
 
-Summarize the following news video clearly and objectively.
+Summarize the following news video using ONLY information explicitly stated
+or clearly supported by the transcript.
 
 Video title:
 {title}
@@ -188,11 +189,20 @@ Transcript:
 {transcript}
 
 Requirements:
-- Write a concise summary in 3-5 paragraphs.
-- Focus on the key facts, events, people, and developments.
-- Remove repetition and filler from the transcript.
-- Do not invent information that is not present in the transcript.
+- Write a concise, factual summary in 3-5 paragraphs.
+- Focus on the main events, facts, people, organizations, statements, and developments.
+- Preserve important numbers, dates, locations, and names when they appear in the transcript.
+- Remove repetition, filler, greetings, advertisements, and conversational noise.
+- Do NOT add facts, background information, explanations, predictions, or context
+  that are not supported by the transcript.
+- Do NOT invent opinions or attribute views to unnamed groups such as
+  "observers", "experts", "analysts", "journalists", or "critics" unless the
+  transcript explicitly identifies them and states their views.
+- If the transcript contains conflicting claims, report them as claims and
+  identify who made each claim when possible.
+- If something is uncertain or unclear in the transcript, preserve that uncertainty.
 - Maintain a neutral journalistic tone.
+- Do not mention that you are an AI.
 """
 
     last_error = None

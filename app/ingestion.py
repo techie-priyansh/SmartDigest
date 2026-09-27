@@ -262,16 +262,110 @@ from app.storage.videos import (
 )
 
 
+# def process_video(video_id: str) -> bool:
+#     """
+#     Process an existing database video.
+
+#     Fetches its transcript and generates a Gemini summary.
+
+#     Returns
+#     -------
+#     bool
+#         True if transcript and summary succeed.
+#     """
+
+#     video = get_video(video_id)
+
+#     if video is None:
+#         raise ValueError(
+#             f"Video '{video_id}' not found in database."
+#         )
+
+#     print(f"\nProcessing: {video.title}")
+
+#     # --------------------------------------------------
+#     # Transcript
+#     # --------------------------------------------------
+
+#     try:
+
+#         transcript = fetch_transcript(
+#             video.video_id
+#         )
+
+#         update_transcript(
+#             video_id=video.video_id,
+#             transcript=transcript,
+#             status="success",
+#         )
+
+#         print(
+#             f"Transcript saved "
+#             f"({len(transcript)} characters)"
+#         )
+
+#     except Exception as error:
+
+#         update_transcript(
+#             video_id=video.video_id,
+#             transcript=None,
+#             status="failed",
+#         )
+
+#         print(
+#             f"Transcript failed: {error}"
+#         )
+
+#         return False
+
+#     # --------------------------------------------------
+#     # Gemini summary
+#     # --------------------------------------------------
+
+#     try:
+
+#         summary = summarize_transcript(
+#             transcript=transcript,
+#             title=video.title,
+#         )
+
+#         update_summary(
+#             video_id=video.video_id,
+#             summary=summary,
+#             status="success",
+#         )
+
+#         print(
+#             f"Summary saved "
+#             f"({len(summary)} characters)"
+#         )
+
+#     except Exception as error:
+
+#         update_summary(
+#             video_id=video.video_id,
+#             summary=None,
+#             status="failed",
+#         )
+
+#         print(
+#             f"Summary failed: {error}"
+#         )
+
+#         return False
+
+#     return True
+
 def process_video(video_id: str) -> bool:
     """
-    Process an existing database video.
+    Process a video using its current database state.
 
-    Fetches its transcript and generates a Gemini summary.
+    Retries only the pipeline stages that have not succeeded.
 
     Returns
     -------
     bool
-        True if transcript and summary succeed.
+        True if transcript and summary are both successful.
     """
 
     video = get_video(video_id)
@@ -283,49 +377,57 @@ def process_video(video_id: str) -> bool:
 
     print(f"\nProcessing: {video.title}")
 
-    # --------------------------------------------------
-    # Transcript
-    # --------------------------------------------------
+    # ---------------------------------------------------------
+    # Step 1: Transcript
+    # ---------------------------------------------------------
+
+    if video.transcript_status == "success":
+        print("Transcript already available. Skipping.")
+
+    else:
+        print("Fetching transcript...")
+
+        try:
+            transcript = fetch_transcript(video.video_id)
+
+            update_transcript(
+                video_id=video.video_id,
+                transcript=transcript,
+                status="success",
+            )
+
+            # Keep local object in sync
+            video.transcript = transcript
+            video.transcript_status = "success"
+
+            print(
+                f"Transcript saved "
+                f"({len(transcript)} characters)"
+            )
+
+        except Exception as error:
+            update_transcript(
+                video_id=video.video_id,
+                transcript=None,
+                status="failed",
+            )
+
+            print(f"Transcript failed: {error}")
+            return False
+
+    # ---------------------------------------------------------
+    # Step 2: Summary
+    # ---------------------------------------------------------
+
+    if video.summary_status == "success":
+        print("Summary already available. Skipping.")
+        return True
+
+    print("Generating Gemini summary...")
 
     try:
-
-        transcript = fetch_transcript(
-            video.video_id
-        )
-
-        update_transcript(
-            video_id=video.video_id,
-            transcript=transcript,
-            status="success",
-        )
-
-        print(
-            f"Transcript saved "
-            f"({len(transcript)} characters)"
-        )
-
-    except Exception as error:
-
-        update_transcript(
-            video_id=video.video_id,
-            transcript=None,
-            status="failed",
-        )
-
-        print(
-            f"Transcript failed: {error}"
-        )
-
-        return False
-
-    # --------------------------------------------------
-    # Gemini summary
-    # --------------------------------------------------
-
-    try:
-
         summary = summarize_transcript(
-            transcript=transcript,
+            transcript=video.transcript,
             title=video.title,
         )
 
@@ -341,17 +443,13 @@ def process_video(video_id: str) -> bool:
         )
 
     except Exception as error:
-
         update_summary(
             video_id=video.video_id,
             summary=None,
             status="failed",
         )
 
-        print(
-            f"Summary failed: {error}"
-        )
-
+        print(f"Summary failed: {error}")
         return False
 
     return True

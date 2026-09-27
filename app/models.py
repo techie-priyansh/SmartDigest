@@ -70,3 +70,62 @@ class Video(Base):
         default=datetime.utcnow,
         nullable=False,
     )
+
+
+class Article(Base):
+    __tablename__ = "articles"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    url: Mapped[str] = mapped_column(
+        Text,
+        unique=True,
+        nullable=False,
+    )
+
+    source: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+    )
+
+    title: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    published_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    content: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    content_status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="pending",
+    )
+
+    summary: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    summary_status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="pending",
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False,
+    )
