@@ -1,0 +1,10 @@
+# Runtime dependencies only (no Jupyter/Streamlit). Used by the Docker image.
+# Versions match requirements.txt; pip resolves the rest.
+python-dotenv==1.2.3
+google-genai==2.25.0
+SQLAlchemy==2.0.54
+psycopg2-binary==2.9.13
+feedparser==6.0.14
+requests==2.34.2
+trafilatura==2.2.0
+youtube-transcript-api==1.2.4

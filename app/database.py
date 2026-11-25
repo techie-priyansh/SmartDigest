@@ -8,24 +8,45 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
 
-DB_USER = os.getenv("POSTGRES_USER")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
-DB_PORT = os.getenv("POSTGRES_PORT", "5432")
-DB_NAME = os.getenv("POSTGRES_DB")
+def _build_database_url() -> str:
+    """
+    Resolve the database URL.
 
+    DATABASE_URL (used by Render and most hosts) wins when set.
+    Otherwise the URL is built from the POSTGRES_* variables.
+    """
 
-if not all([DB_USER, DB_PASSWORD, DB_NAME]):
-    raise ValueError(
-        "PostgreSQL configuration is missing from .env"
+    url = os.getenv("DATABASE_URL")
+
+    if url:
+        # Hosts hand out "postgres://" or "postgresql://" URLs, but
+        # SQLAlchemy needs the psycopg2 driver named explicitly.
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg2://" + url[len(prefix):]
+
+        return url
+
+    user = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD")
+    host = os.getenv("POSTGRES_HOST", "localhost")
+    port = os.getenv("POSTGRES_PORT", "5432")
+    name = os.getenv("POSTGRES_DB")
+
+    if not all([user, password, name]):
+        raise ValueError(
+            "Database configuration is missing. Set DATABASE_URL, "
+            "or POSTGRES_USER, POSTGRES_PASSWORD and POSTGRES_DB."
+        )
+
+    return (
+        f"postgresql+psycopg2://"
+        f"{user}:{password}@"
+        f"{host}:{port}/{name}"
     )
 
 
-DATABASE_URL = (
-    f"postgresql+psycopg2://"
-    f"{DB_USER}:{DB_PASSWORD}@"
-    f"{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+DATABASE_URL = _build_database_url()
 
 
 engine = create_engine(

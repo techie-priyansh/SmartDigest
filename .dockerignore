@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+SmartDigest/
+__pycache__/
+*.py[cod]
+
+notebooks/
+.vscode/
+digest_preview_*.html
+
+Dockerfile
+docker-compose.yml
+.dockerignore
