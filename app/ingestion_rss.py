@@ -113,6 +113,7 @@ def process_article(url: str) -> bool:
 def ingest_rss_feed(
     feed_url: str,
     lookback_hours: int = 24,
+    max_items: int | None = None,
 ) -> int:
     """
     Fetch recent RSS articles and process them.
@@ -137,6 +138,15 @@ def ingest_rss_feed(
     )
 
     print(f"Found {len(articles)} recent articles.")
+
+    if max_items is not None and len(articles) > max_items:
+        articles = sorted(
+            articles,
+            key=lambda article: article["published_at"],
+            reverse=True,
+        )[:max_items]
+
+        print(f"Processing only the newest {max_items}.")
 
     new_articles = 0
     successful = 0

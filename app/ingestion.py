@@ -458,6 +458,7 @@ def process_video(video_id: str) -> bool:
 def ingest_youtube_channel(
     channel_id: str,
     lookback_hours: int = 24,
+    max_items: int | None = None,
 ) -> int:
     """
     Fetch recent YouTube videos and process new videos.
@@ -483,6 +484,15 @@ def ingest_youtube_channel(
     print(
         f"Found {len(videos)} recent videos."
     )
+
+    if max_items is not None and len(videos) > max_items:
+        videos = sorted(
+            videos,
+            key=lambda video: video["published_at"],
+            reverse=True,
+        )[:max_items]
+
+        print(f"Processing only the newest {max_items}.")
 
     new_videos = 0
     successful = 0

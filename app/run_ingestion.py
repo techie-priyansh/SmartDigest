@@ -1,4 +1,9 @@
-from app.config.sources import RSS_SOURCES, YOUTUBE_SOURCES
+from app.config.sources import (
+    MAX_ARTICLES_PER_FEED,
+    MAX_VIDEOS_PER_CHANNEL,
+    RSS_SOURCES,
+    YOUTUBE_SOURCES,
+)
 from app.ingestion import ingest_youtube_channel
 from app.ingestion_rss import ingest_rss_feed
 
@@ -25,6 +30,7 @@ def run_ingestion(lookback_hours: int = 24) -> None:
             ingest_youtube_channel(
                 channel_id=source["channel_id"],
                 lookback_hours=lookback_hours,
+                max_items=MAX_VIDEOS_PER_CHANNEL,
             )
 
         except Exception as error:
@@ -46,6 +52,7 @@ def run_ingestion(lookback_hours: int = 24) -> None:
             ingest_rss_feed(
                 feed_url=source["feed_url"],
                 lookback_hours=lookback_hours,
+                max_items=MAX_ARTICLES_PER_FEED,
             )
 
         except Exception as error:
