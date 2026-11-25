@@ -253,3 +253,36 @@ Requirements:
         "Gemini summarization failed with all "
         "configured models."
     ) from last_error
+
+def generate_with_fallback(prompt: str) -> str:
+    """
+    Generate text for any prompt, trying each configured Gemini model
+    in order until one succeeds.
+    """
+
+    client = get_gemini_client()
+
+    last_error = None
+
+    for model in GEMINI_MODELS:
+
+        try:
+
+            return _generate_with_model(
+                client=client,
+                model=model,
+                prompt=prompt,
+            )
+
+        except Exception as error:
+
+            last_error = error
+
+            print(
+                f"\n{model} unavailable. "
+                "Switching to the next Gemini model...\n"
+            )
+
+    raise RuntimeError(
+        "Gemini generation failed with all configured models."
+    ) from last_error
