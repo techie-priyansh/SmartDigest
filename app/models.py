@@ -230,3 +230,46 @@ class ItemScore(Base):
         default=datetime.utcnow,
         nullable=False,
     )
+
+
+class SentItem(Base):
+    """Items already emailed to a user, so they are never repeated."""
+
+    __tablename__ = "sent_items"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "item_type",
+            "item_id",
+            name="uq_sent_items_user_item",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    # "article" or "video"
+    item_type: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+    )
+
+    item_id: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    sent_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False,
+    )

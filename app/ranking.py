@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app.database import SessionLocal
 from app.llm.gemini import generate_with_fallback
-from app.models import Article, ItemScore, User, Video
+from app.models import Article, ItemScore, SentItem, User, Video
 
 
 # Items sent to Gemini per request.
@@ -65,6 +65,16 @@ def _load_items(session, lookback_hours: int) -> list[dict]:
         )
 
     return items
+
+
+def _load_sent_keys(session, user_id: int) -> set[str]:
+    """Return keys of items already emailed to this user."""
+
+    rows = session.execute(
+        select(SentItem).where(SentItem.user_id == user_id)
+    ).scalars()
+
+    return {f"{row.item_type}:{row.item_id}" for row in rows}
 
 
 def _load_scores(session, user_id: int) -> dict[str, tuple[int, str]]:
@@ -177,7 +187,12 @@ def rank_for_user(
     """
 
     with SessionLocal() as session:
-        items = _load_items(session, lookback_hours)
+        sent = _load_sent_keys(session, user.id)
+        items = [
+            item
+            for item in _load_items(session, lookback_hours)
+            if item["key"] not in sent
+        ]
         scores = _load_scores(session, user.id)
 
         unscored = [item for item in items if item["key"] not in scores]
