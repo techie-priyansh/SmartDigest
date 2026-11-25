@@ -11,10 +11,10 @@ load_dotenv()
 
 # Models are tried in this order.
 GEMINI_MODELS = [
-    "gemini-3.6-flash",
-    "gemini-3.5-flash",
     "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-3.6-flash",
 ]
 
 
@@ -65,7 +65,22 @@ def _is_retryable_error(error: Exception) -> bool:
         code in error_text
         for code in retryable_codes
     )
+def _is_quota_exhausted_error(error: Exception) -> bool:
+    """Check whether the API error indicates exhausted quota."""
 
+    error_text = str(error).upper()
+
+    quota_indicators = (
+        "QUOTA EXCEEDED",
+        "GENERATE_CONTENT_FREE_TIER_REQUESTS",
+        "GENERATEREQUESTSPERDAYPERPROJECT-FREETIER",
+        "RESOURCE_EXHAUSTED",
+    )
+
+    return any(
+        indicator in error_text
+        for indicator in quota_indicators
+    )
 
 def _wait_before_retry(attempt: int) -> None:
     """
@@ -131,17 +146,22 @@ def _generate_with_model(
             return response.text.strip()
 
         except Exception as error:
-
             print(
-                f"{model} failed: "
-                f"{type(error).__name__}: {error}"
+                f"{model} failed: {type(error).__name__}: {error}"
             )
 
-            # Non-temporary error.
+            # Daily/model quota is exhausted.
+            # Retrying the same model will not help.
+            if _is_quota_exhausted_error(error):
+                print(
+                    f"Quota exhausted for {model}. "
+                    "Skipping retries and moving to the next model."
+                )
+                raise
+
             if not _is_retryable_error(error):
                 raise
 
-            # No retries remaining.
             if attempt >= MAX_RETRIES:
                 break
 
