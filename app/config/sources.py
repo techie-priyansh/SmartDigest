@@ -16,3 +16,13 @@ RSS_SOURCES = [
         "feed_url": "https://openai.com/news/rss.xml",
     },
 ]
+
+
+DEFAULT_USER = {
+    "email": "your_email@example.com",
+    "name": "Priyansh",
+    "interests": (
+        "generative AI, LLMs, machine learning, "
+        "supply chain analytics, data engineering"
+    ),
+}
